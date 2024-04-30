@@ -1,81 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMU and Geolocation Data Collection</title>
-</head>
-<body>
-    <h1>IMU and Geolocation Data Collection</h1>
-    <div>
-        <label for="ip-address">Enter IP Address:</label>
-        <input type="text" id="ip-address" placeholder="Enter IP Address">
-        <button onclick="sendData()">Send Data</button>
-    </div>
-    <div id="sensor-data"></div> <!-- Sensor data will be displayed here -->
-    <div id="error-message" style="color: red;"></div> <!-- Error message will be displayed here -->
+<html>
+  <head>
+    <title>Send IMU and GPS Data</title>
+  </head>
+  <body>
+    <h1>Enter address:</h1>
+    <input type="text" id="address" />
+    <button onclick="sendData()">Send Data</button>
+      <script>
 
-    <script>
-        let ipAddressInput = document.getElementById('ip-address');
-        let sensorDataDisplay = document.getElementById('sensor-data');
+          function sendData() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
 
-        function sendData() {
-            let ipAddress = ipAddressInput.value.trim();
-            if (ipAddress === '') {
-                displayError('Please enter IP address');
-                return;
-            }
-            // Geolocation
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    const coords = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    };
-                    sendSensorData(ipAddress, { geolocation: coords });
-                }, error => {
-                    displayError('Geolocation error: ' + error.message);
-                });
-            } else {
-                displayError('Geolocation is not supported');
-            }
+      window.addEventListener("deviceorientation", function(event) {
+        const alpha = event.alpha;
+        const beta = event.beta;
+        const gamma = event.gamma;
 
-            // IMU data - You would need to use a library or API to access IMU data from the device
-            // This example assumes you have access to the IMU data already
-            const imuData = {
-                // IMU data here
-            };
-            sendSensorData(ipAddress, { imu: imuData });
-        }
+        const data = {
+          lat,
+          lon,
+          alpha,
+          beta,
+          gamma
+        };
 
-        function sendSensorData(ipAddress, data) {
-            displaySensorData(data);
-            fetch('http://' + ipAddress + '/data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Data sent successfully:', data);
-                
-            })
-            .catch(error => {
-                displayError('Error sending data: ' + error.message);
-            });
-        }
-
-        function displaySensorData(data) {
-            // Display sensor data on the webpage
-            let sensorDataString = JSON.stringify(data, null, 2); // Beautify JSON
-            sensorDataDisplay.innerText = sensorDataString;
-        }
-
-        function displayError(message) {
-            document.getElementById('error-message').textContent = message;
-        }
-    </script>
-</body>
+        const address = document.getElementById("address").value;
+        const request = new XMLHttpRequest();
+        request.open("POST", address, true);
+        request.setRequestHeader("Content-Type", "application/json");
+        request.send(JSON.stringify(data));
+      });
+    });
+  }
+}
+      </script>
+  </body>
 </html>
